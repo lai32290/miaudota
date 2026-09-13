@@ -856,46 +856,31 @@
   ]).catch(() => {}).then(render);
   render();
 
-  // downloads capability
-  (async () => {
-    let downloadsCap = null;
-    try {
-      if (window.claude && window.claude.use) {
-        downloadsCap = await window.claude.use('downloads');
+  // download button
+  els.downloadBtn.disabled = false;
+  els.downloadBtn.textContent = 'Baixar imagem';
+
+  els.downloadBtn.addEventListener('click', () => {
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const base = (state.name || 'cartao-adocao')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'cartao-adocao';
+      try {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = base + '.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        els.downloadHint.textContent = 'Imagem salva.';
+      } catch (err) {
+        els.downloadHint.textContent = 'Não foi possível baixar agora. Tente novamente.';
       }
-    } catch(_) { downloadsCap = null; }
-
-    if (!downloadsCap){
-      els.downloadBtn.style.display = 'none';
-      els.downloadHint.textContent = 'Download indisponível nesta visualização — abra a página publicada.';
-      return;
-    }
-
-    els.downloadBtn.disabled = false;
-    els.downloadBtn.textContent = 'Baixar imagem';
-
-    els.downloadBtn.addEventListener('click', () => {
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        const base = (state.name || 'cartao-adocao')
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'cartao-adocao';
-        try {
-          els.downloadBtn.disabled = true;
-          await downloadsCap.save({ filename: base + '.png', data: blob });
-          els.downloadHint.textContent = 'Imagem salva.';
-        } catch (err) {
-          if (err && err.code === 'declined'){
-            els.downloadHint.textContent = '';
-          } else {
-            els.downloadHint.textContent = 'Não foi possível baixar agora. Tente novamente.';
-          }
-        } finally {
-          els.downloadBtn.disabled = false;
-        }
-      }, 'image/png', 1.0);
-    });
-  })();
+    }, 'image/png', 1.0);
+  });
 })();
 </script>
 </body>
