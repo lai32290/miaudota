@@ -62,13 +62,13 @@
 
   .preview-pane{
     position:sticky; top:20px; z-index:999;
-    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    display:flex; flex-direction:column; align-items:center; gap:14px;
   }
   .canvas-wrap{
     position:relative;
     flex:none;
     width:auto;
-    height:150px;
+    height:40vh;
     aspect-ratio:4/5;
     border-radius:10px;
     overflow:hidden;
@@ -79,8 +79,7 @@
     transition:width .2s ease, height .2s ease;
   }
   .canvas-wrap.expanded{
-    width:220px;
-    height:auto;
+    height:60vh;
     border-radius:18px;
   }
   .canvas-wrap::after{
@@ -93,7 +92,14 @@
   }
   canvas{ width:100%; height:100%; display:block; }
 
-  .preview-actions{ flex:1; min-width:150px; }
+  .preview-actions{ width:100%; }
+
+  @media (min-width:960px){
+    .preview-pane{ flex-direction:row; align-items:flex-start; flex-wrap:wrap; }
+    .canvas-wrap{ width:220px; height:auto; }
+    .canvas-wrap.expanded{ width:300px; height:auto; }
+    .preview-actions{ flex:1; min-width:150px; width:auto; }
+  }
 
   .primary-btn{
     width:100%;
