@@ -61,7 +61,7 @@
   }
 
   .preview-pane{
-    position:sticky; top:20px; z-index:999;
+    position:relative; z-index:1;
     display:flex; flex-direction:column; align-items:center; gap:14px;
   }
   .canvas-wrap{
@@ -95,7 +95,7 @@
   .preview-actions{ width:100%; }
 
   @media (min-width:960px){
-    .preview-pane{ flex-direction:row; align-items:flex-start; flex-wrap:wrap; }
+    .preview-pane{ position:sticky; top:20px; z-index:999; flex-direction:row; align-items:flex-start; flex-wrap:wrap; }
     .canvas-wrap{ width:220px; height:auto; }
     .canvas-wrap.expanded{ width:300px; height:auto; }
     .preview-actions{ flex:1; min-width:150px; width:auto; }
