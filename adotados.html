@@ -261,6 +261,7 @@
 
   const COLORS = {
     accent: '#c2168d',
+    banner: 'rgb(232,109,224)',
     dark: '#273747'
   };
 
@@ -370,17 +371,21 @@
 
     // the name/status block occupies only 55% of the width, inset from
     // the border (not flush against it) with the adoption sticker
-    // straddling its left edge
-    const blockMargin = W * 0.025;
+    // straddling its left edge — the left margin has to clear the sticker's
+    // own radius so the sticker itself never crosses the border
     const blockWidth = W * 0.55;
-    const blockLeft = m + blockMargin;
+    const circleR = blockWidth * 0.15;
+    const blockMarginLeft = circleR + W * 0.015;
+    const blockMarginBottom = W * 0.025;
+    const blockLeft = m + blockMarginLeft;
     const blockRight = blockLeft + blockWidth;
-    const blockBottom = H - m - blockMargin;
+    const blockBottom = H - m - blockMarginBottom;
     const blockHeight = H * 0.19;
     const blockTop = blockBottom - blockHeight;
-    const bannerH = blockHeight * 0.6;
-    const footerH = blockHeight - bannerH;
-    const circleR = blockWidth * 0.15;
+    const bandGap = 2;
+    const bannerH = blockHeight * 0.42;
+    const footerTop = blockTop + bannerH + bandGap;
+    const footerH = blockBottom - footerTop;
     const textLeft = blockLeft + circleR * 1.15;
     const textMaxWidth = blockRight - textLeft - blockWidth * 0.05;
 
@@ -389,13 +394,13 @@
     ctx.rect(blockLeft, blockTop, blockWidth, blockHeight);
     ctx.clip();
 
-    ctx.fillStyle = COLORS.accent;
+    ctx.fillStyle = COLORS.banner;
     ctx.fillRect(blockLeft, blockTop, blockWidth, bannerH);
     ctx.fillStyle = COLORS.dark;
-    ctx.fillRect(blockLeft, blockTop + bannerH, blockWidth, footerH);
+    ctx.fillRect(blockLeft, footerTop, blockWidth, footerH);
 
     drawFittedTextLeft(ctx, ((state.sexo === 'femea' ? 'ADOTADA' : 'ADOTADO')).toUpperCase(), textLeft, blockTop + bannerH / 2, textMaxWidth, bannerH * 0.6, bannerH * 0.2, 800, '#ffffff', '"Montserrat", sans-serif');
-    drawFittedTextLeft(ctx, (state.name || '').toUpperCase(), textLeft, blockTop + bannerH + footerH / 2, textMaxWidth, footerH * 0.52, footerH * 0.18, 700, '#ffffff', '"Montserrat", sans-serif');
+    drawFittedTextLeft(ctx, (state.name || '').toUpperCase(), textLeft, footerTop + footerH / 2, textMaxWidth, footerH * 0.52, footerH * 0.18, 700, '#ffffff', '"Montserrat", sans-serif');
 
     ctx.restore();
 
