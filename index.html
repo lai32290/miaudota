@@ -54,6 +54,9 @@
   header{ margin-bottom:24px; }
   header h1{ font-size:22px; font-weight:800; margin:0 0 6px; letter-spacing:-0.01em; }
   header p{ margin:0; color:var(--muted); font-size:14px; line-height:1.5; max-width:56ch; }
+  header p + p{ margin-top:10px; }
+  .nav-link{ color:var(--accent); font-size:13.5px; font-weight:600; text-decoration:none; }
+  .nav-link:hover{ text-decoration:underline; }
 
   main{ display:grid; grid-template-columns:1fr; gap:28px; }
   @media (min-width:960px){
@@ -214,6 +217,7 @@
   <header>
     <h1>Gerador de cartão de adoção</h1>
     <p>Envie a foto do animal, edite os textos de cada campo e baixe a imagem pronta para postar.</p>
+    <p><a class="nav-link" href="adotados.html">Template de adotados →</a></p>
   </header>
 
   <main>

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Card de Adotado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f2f1ef;
+    --panel:#ffffff;
+    --text:#1a1a1f;
+    --muted:#6b6d76;
+    --border:#e3e2df;
+    --accent:#c2168d;
+    --accent-ink:#ffffff;
+    --field-bg:#f7f6f4;
+    --shadow: 0 24px 48px -20px rgba(20,15,25,0.35);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#131318;
+      --panel:#1b1b22;
+      --text:#f1f0f4;
+      --muted:#9a9aa6;
+      --border:#2c2c35;
+      --field-bg:#232329;
+      --shadow: 0 24px 48px -20px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#131318;
+    --panel:#1b1b22;
+    --text:#f1f0f4;
+    --muted:#9a9aa6;
+    --border:#2c2c35;
+    --field-bg:#232329;
+    --shadow: 0 24px 48px -20px rgba(0,0,0,0.6);
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; animation:none !important; }
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    min-height:100vh;
+  }
+  .app{ max-width:1160px; margin:0 auto; padding:28px 20px 64px; }
+  header{ margin-bottom:24px; }
+  header h1{ font-size:22px; font-weight:800; margin:0 0 6px; letter-spacing:-0.01em; }
+  header p{ margin:0; color:var(--muted); font-size:14px; line-height:1.5; max-width:56ch; }
+  header a.back-link{ display:inline-block; margin-bottom:12px; color:var(--muted); font-size:13px; text-decoration:none; }
+  header a.back-link:hover{ color:var(--text); text-decoration:underline; }
+
+  main{ display:grid; grid-template-columns:1fr; gap:28px; }
+  @media (min-width:960px){
+    main{ grid-template-columns:420px 1fr; align-items:start; }
+  }
+
+  .preview-pane{
+    position:sticky; top:0; z-index:999;
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    background:var(--bg);
+    padding:14px 0 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .canvas-wrap{
+    position:relative;
+    flex:none;
+    width:auto;
+    height:40vh;
+    aspect-ratio:4/5;
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    background:var(--panel);
+    border:1px solid var(--border);
+    cursor:pointer;
+    transition:width .2s ease, height .2s ease;
+  }
+  .canvas-wrap.expanded{
+    height:60vh;
+    border-radius:18px;
+  }
+  .canvas-wrap::after{
+    content:"⤢";
+    position:absolute; bottom:3px; right:3px;
+    width:16px; height:16px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; color:#fff; background:rgba(0,0,0,0.5);
+    border-radius:4px; pointer-events:none;
+  }
+  canvas{ width:100%; height:100%; display:block; }
+
+  .preview-actions{ width:100%; }
+
+  @media (min-width:960px){
+    .preview-pane{ top:20px; flex-direction:row; align-items:flex-start; flex-wrap:wrap; background:none; padding:0; border-bottom:none; }
+    .canvas-wrap{ width:220px; height:auto; }
+    .canvas-wrap.expanded{ width:300px; height:auto; }
+    .preview-actions{ flex:1; min-width:150px; width:auto; }
+  }
+
+  .primary-btn{
+    width:100%;
+    margin-top:0;
+    padding:14px 18px;
+    border-radius:12px;
+    border:none;
+    background:var(--accent);
+    color:var(--accent-ink);
+    font-family:inherit;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+  }
+  .primary-btn:disabled{ opacity:0.5; cursor:default; }
+  .primary-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+
+  .hint{ margin:10px 2px 0; font-size:12.5px; color:var(--muted); min-height:16px; }
+
+  .controls-pane{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:8px 22px 22px;
+  }
+  .field-group{ padding:18px 0; border-top:1px solid var(--border); }
+  .field-group:first-child{ border-top:none; }
+  .field-group h2{ font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); margin:0 0 14px; }
+
+  .field{ display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+  .field:last-child{ margin-bottom:0; }
+  .field label{ font-size:13.5px; font-weight:600; color:var(--text); }
+  .field .row{ display:flex; align-items:center; justify-content:space-between; }
+  .field .row span{ font-size:12.5px; color:var(--muted); font-weight:500; }
+
+  input[type="text"]{
+    width:100%;
+    font-family:inherit;
+    font-size:14.5px;
+    padding:11px 13px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--field-bg);
+    color:var(--text);
+  }
+  input[type="text"]:focus-visible{
+    outline:2px solid var(--accent); outline-offset:1px;
+  }
+
+  input[type="range"]{ width:100%; accent-color:var(--accent); }
+
+  .upload-btn{
+    display:flex; align-items:center; justify-content:center;
+    padding:12px 14px; border-radius:10px;
+    border:1.5px dashed var(--border);
+    color:var(--text); font-weight:600; font-size:14px;
+    cursor:pointer; text-align:center;
+  }
+  .upload-btn:hover{ border-color:var(--accent); }
+  .upload-btn.has-file{ border-style:solid; }
+
+  .link-btn{
+    background:none; border:none; padding:0; margin-top:8px;
+    color:var(--muted); font-size:12.5px; text-decoration:underline;
+    cursor:pointer; font-family:inherit;
+  }
+  .link-btn:hover{ color:var(--text); }
+
+  .reset-row{ margin-top:18px; text-align:right; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="back-link" href="index.html">← Gerador de cartão de adoção</a>
+    <h1>Gerador de card de adotado</h1>
+    <p>Envie a foto do tutor com o animal e edite os textos. Cores e imagens do selo seguem o padrão miaudota.</p>
+  </header>
+
+  <main>
+    <section class="preview-pane">
+      <div class="canvas-wrap" id="canvasWrap" title="Clique para ampliar ou reduzir">
+        <canvas id="cardCanvas" width="1200" height="1500"></canvas>
+      </div>
+      <div class="preview-actions">
+        <button id="downloadBtn" class="primary-btn" disabled>Carregando…</button>
+        <p id="downloadHint" class="hint"></p>
+      </div>
+    </section>
+
+    <section class="controls-pane">
+      <div class="field-group">
+        <h2>Foto</h2>
+        <div class="field">
+          <label class="upload-btn" id="photoUploadLabel" for="photoInput">Enviar foto</label>
+          <input type="file" id="photoInput" accept="image/*" hidden>
+        </div>
+        <div class="field">
+          <div class="row"><label for="photoOffsetY">Posição vertical</label><span id="offsetYValue">50%</span></div>
+          <input type="range" id="photoOffsetY" min="0" max="100" value="50">
+        </div>
+        <div class="field">
+          <div class="row"><label for="photoZoom">Zoom</label><span id="zoomValue">100%</span></div>
+          <input type="range" id="photoZoom" min="100" max="200" value="100">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <h2>Textos</h2>
+        <div class="field">
+          <label for="statusInput">Selo</label>
+          <input type="text" id="statusInput" maxlength="14" value="ADOTADA">
+        </div>
+        <div class="field">
+          <label for="nameInput">Nome</label>
+          <input type="text" id="nameInput" maxlength="30" value="NOME DO PET">
+        </div>
+      </div>
+
+      <div class="reset-row">
+        <button id="resetBtn" class="link-btn">Restaurar textos padrão</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('cardCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+
+  const COLORS = {
+    accent: '#c2168d',
+    dark: '#273747'
+  };
+
+  const DEFAULTS = {
+    status: 'ADOTADA',
+    name: 'NOME DO PET',
+    panY: 50,
+    zoom: 100
+  };
+
+  const state = {
+    photo: null,
+    ...DEFAULTS
+  };
+
+  const els = {
+    canvasWrap: document.getElementById('canvasWrap'),
+    photoInput: document.getElementById('photoInput'),
+    photoUploadLabel: document.getElementById('photoUploadLabel'),
+    offsetY: document.getElementById('photoOffsetY'),
+    offsetYValue: document.getElementById('offsetYValue'),
+    zoom: document.getElementById('photoZoom'),
+    zoomValue: document.getElementById('zoomValue'),
+    status: document.getElementById('statusInput'),
+    name: document.getElementById('nameInput'),
+    resetBtn: document.getElementById('resetBtn'),
+    downloadBtn: document.getElementById('downloadBtn'),
+    downloadHint: document.getElementById('downloadHint')
+  };
+
+  // fixed template assets — extracted from the miaudota brand logo
+  const badgeIcon = new Image();
+  badgeIcon.onload = () => scheduleRender();
+  badgeIcon.src = 'assets/badge-icon.png';
+
+  function loadImageFile(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function drawCoverImage(c, img, x, y, w, h, panYPercent, zoomPercent){
+    const scaleBase = Math.max(w / img.width, h / img.height);
+    const scale = scaleBase * (zoomPercent / 100);
+    const iw = img.width * scale, ih = img.height * scale;
+    const dx = x + (w - iw) / 2;
+    const maxOffset = Math.max(0, ih - h);
+    const dy = y - maxOffset * (panYPercent / 100);
+    c.drawImage(img, dx, dy, iw, ih);
+  }
+
+  function drawContainImage(c, img, cx, cy, boxW, boxH){
+    const scale = Math.min(boxW / img.width, boxH / img.height);
+    const iw = img.width * scale, ih = img.height * scale;
+    c.drawImage(img, cx - iw / 2, cy - ih / 2, iw, ih);
+  }
+
+  function drawFittedText(c, text, cx, cy, maxWidth, maxFont, minFont, weight, color, fontFamily){
+    fontFamily = fontFamily || 'Poppins, sans-serif';
+    let fontSize = maxFont;
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    while (fontSize > minFont){
+      c.font = `${weight} ${fontSize}px ${fontFamily}`;
+      if (c.measureText(text).width <= maxWidth) break;
+      fontSize -= 2;
+    }
+    c.font = `${weight} ${fontSize}px ${fontFamily}`;
+    c.fillStyle = color;
+    c.fillText(text, cx, cy);
+  }
+
+  function roundedRectPath(c, x, y, w, h, r){
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function render(){
+    ctx.clearRect(0, 0, W, H);
+
+    if (state.photo){
+      drawCoverImage(ctx, state.photo, 0, 0, W, H, state.panY, state.zoom);
+    } else {
+      ctx.fillStyle = '#d9dbe0';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#8b8e98';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '700 64px Poppins, sans-serif';
+      ctx.fillText('📷', W / 2, H * 0.44 - 40);
+      ctx.font = '600 30px Poppins, sans-serif';
+      ctx.fillText('Envie uma foto para começar', W / 2, H * 0.44 + 34);
+    }
+
+    const m = W * 0.035;
+    const borderW = W * 0.014;
+    const radius = W * 0.05;
+
+    const blockLeft = m;
+    const blockRight = W - m;
+    const blockWidth = blockRight - blockLeft;
+    const blockBottom = H - m;
+    const blockHeight = H * 0.19;
+    const blockTop = blockBottom - blockHeight;
+    const bannerH = blockHeight * 0.6;
+    const footerH = blockHeight - bannerH;
+    const circleR = blockHeight * 0.36;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(blockLeft, blockTop, blockWidth, blockHeight);
+    ctx.clip();
+
+    ctx.fillStyle = COLORS.accent;
+    ctx.fillRect(blockLeft, blockTop, blockWidth, bannerH);
+    ctx.fillStyle = COLORS.dark;
+    ctx.fillRect(blockLeft, blockTop + bannerH, blockWidth, footerH);
+
+    drawFittedText(ctx, (state.status || '').toUpperCase(), blockLeft + blockWidth / 2, blockTop + bannerH / 2, blockWidth * 0.82, bannerH * 0.6, bannerH * 0.22, 800, '#ffffff', '"Montserrat", sans-serif');
+    drawFittedText(ctx, (state.name || '').toUpperCase(), blockLeft + blockWidth / 2, blockTop + bannerH + footerH / 2, blockWidth * 0.62, footerH * 0.52, footerH * 0.2, 700, '#ffffff', '"Montserrat", sans-serif');
+
+    const badgeCx = blockRight - circleR;
+    const badgeCy = blockBottom - circleR;
+    ctx.beginPath();
+    ctx.fillStyle = COLORS.dark;
+    ctx.arc(badgeCx, badgeCy, circleR, 0, Math.PI * 2);
+    ctx.fill();
+    if (badgeIcon.complete && badgeIcon.naturalWidth){
+      drawContainImage(ctx, badgeIcon, badgeCx, badgeCy, circleR * 1.5, circleR * 1.5);
+    }
+
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = COLORS.accent;
+    ctx.lineWidth = borderW;
+    roundedRectPath(ctx, m, m, W - 2 * m, H - 2 * m, radius);
+    ctx.stroke();
+    ctx.restore();
+
+    const r2 = W * 0.115;
+    const cx2 = m + r2 * 0.85;
+    const cy2 = m + r2 * 0.85;
+    ctx.save();
+    ctx.beginPath();
+    ctx.fillStyle = '#ffffff';
+    ctx.arc(cx2, cy2, r2, 0, Math.PI * 2);
+    ctx.fill();
+    if (badgeIcon.complete && badgeIcon.naturalWidth){
+      drawContainImage(ctx, badgeIcon, cx2, cy2, r2 * 1.64, r2 * 1.64);
+    }
+    ctx.restore();
+  }
+
+  function scheduleRender(){ requestAnimationFrame(render); }
+
+  els.photoInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      state.photo = await loadImageFile(file);
+      els.photoUploadLabel.textContent = 'Trocar foto';
+      els.photoUploadLabel.classList.add('has-file');
+      scheduleRender();
+    } catch(_) {}
+  });
+
+  els.offsetY.addEventListener('input', () => {
+    state.panY = Number(els.offsetY.value);
+    els.offsetYValue.textContent = state.panY + '%';
+    scheduleRender();
+  });
+  els.zoom.addEventListener('input', () => {
+    state.zoom = Number(els.zoom.value);
+    els.zoomValue.textContent = state.zoom + '%';
+    scheduleRender();
+  });
+
+  els.status.addEventListener('input', () => { state.status = els.status.value; scheduleRender(); });
+  els.name.addEventListener('input', () => { state.name = els.name.value; scheduleRender(); });
+
+  function syncUIFromState(){
+    els.status.value = state.status;
+    els.name.value = state.name;
+    els.offsetY.value = state.panY;
+    els.offsetYValue.textContent = state.panY + '%';
+    els.zoom.value = state.zoom;
+    els.zoomValue.textContent = state.zoom + '%';
+  }
+
+  els.resetBtn.addEventListener('click', () => {
+    Object.assign(state, DEFAULTS);
+    syncUIFromState();
+    scheduleRender();
+  });
+
+  els.canvasWrap.addEventListener('click', () => {
+    els.canvasWrap.classList.toggle('expanded');
+  });
+
+  Promise.all([
+    document.fonts.load('800 76px Montserrat'),
+    document.fonts.load('700 42px Montserrat'),
+    document.fonts.load('600 30px Poppins'),
+    document.fonts.load('700 64px Poppins')
+  ]).catch(() => {}).then(render);
+  render();
+
+  // download button
+  els.downloadBtn.disabled = false;
+  els.downloadBtn.textContent = 'Baixar imagem';
+
+  els.downloadBtn.addEventListener('click', () => {
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const base = (state.name || 'adotado')
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'adotado';
+      try {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = base + '.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        els.downloadHint.textContent = 'Imagem salva.';
+      } catch (err) {
+        els.downloadHint.textContent = 'Não foi possível baixar agora. Tente novamente.';
+      }
+    }, 'image/png', 1.0);
+  });
+})();
+</script>
+</body>
+</html>
