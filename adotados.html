@@ -368,12 +368,14 @@
     const m = W * 0.035;
     const borderW = 2;
 
-    // the name/status block occupies only 55% of the width and hugs the
-    // left border, with the adoption sticker straddling its left edge
+    // the name/status block occupies only 55% of the width, inset from
+    // the border (not flush against it) with the adoption sticker
+    // straddling its left edge
+    const blockMargin = W * 0.025;
     const blockWidth = W * 0.55;
-    const blockLeft = m;
+    const blockLeft = m + blockMargin;
     const blockRight = blockLeft + blockWidth;
-    const blockBottom = H - m;
+    const blockBottom = H - m - blockMargin;
     const blockHeight = H * 0.19;
     const blockTop = blockBottom - blockHeight;
     const bannerH = blockHeight * 0.6;
