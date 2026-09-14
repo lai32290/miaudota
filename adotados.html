@@ -173,6 +173,21 @@
   }
   .link-btn:hover{ color:var(--text); }
 
+  .sex-switch-row{ display:flex; align-items:center; gap:12px; }
+  .sex-label{ font-size:13.5px; font-weight:600; color:var(--muted); }
+  .sex-label.active{ color:var(--text); }
+  .switch{ position:relative; width:44px; height:24px; flex:none; }
+  .switch input{ opacity:0; width:0; height:0; position:absolute; }
+  .switch .track{
+    position:absolute; inset:0; background:var(--border); border-radius:20px; cursor:pointer;
+  }
+  .switch .track::after{
+    content:""; position:absolute; width:18px; height:18px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:transform .15s ease;
+  }
+  .switch input:checked + .track{ background:var(--accent); }
+  .switch input:checked + .track::after{ transform:translateX(20px); }
+
   .reset-row{ margin-top:18px; text-align:right; }
 </style>
 </head>
@@ -215,8 +230,15 @@
       <div class="field-group">
         <h2>Textos</h2>
         <div class="field">
-          <label for="statusInput">Selo</label>
-          <input type="text" id="statusInput" maxlength="14" value="ADOTADA">
+          <label>Sexo</label>
+          <div class="sex-switch-row">
+            <span class="sex-label" id="sexLabelMacho">Macho</span>
+            <span class="switch">
+              <input type="checkbox" id="sexoSwitch" checked>
+              <span class="track" onclick="document.getElementById('sexoSwitch').click()"></span>
+            </span>
+            <span class="sex-label" id="sexLabelFemea">Fêmea</span>
+          </div>
         </div>
         <div class="field">
           <label for="nameInput">Nome</label>
@@ -243,7 +265,7 @@
   };
 
   const DEFAULTS = {
-    status: 'ADOTADA',
+    sexo: 'femea',
     name: 'NOME DO PET',
     panY: 50,
     zoom: 100
@@ -262,7 +284,9 @@
     offsetYValue: document.getElementById('offsetYValue'),
     zoom: document.getElementById('photoZoom'),
     zoomValue: document.getElementById('zoomValue'),
-    status: document.getElementById('statusInput'),
+    sexoSwitch: document.getElementById('sexoSwitch'),
+    sexLabelMacho: document.getElementById('sexLabelMacho'),
+    sexLabelFemea: document.getElementById('sexLabelFemea'),
     name: document.getElementById('nameInput'),
     resetBtn: document.getElementById('resetBtn'),
     downloadBtn: document.getElementById('downloadBtn'),
@@ -277,7 +301,7 @@
 
   const adotadaBadge = new Image();
   adotadaBadge.onload = () => scheduleRender();
-  adotadaBadge.src = 'assets/adotada-badge.svg';
+  adotadaBadge.src = 'assets/adota.png';
 
   function loadImageFile(file){
     return new Promise((resolve, reject) => {
@@ -355,15 +379,18 @@
     const borderW = W * 0.008;
     const radius = W * 0.05;
 
-    const blockLeft = m;
-    const blockRight = W - m;
-    const blockWidth = blockRight - blockLeft;
+    // the name/status block occupies only 55% of the width, centered, so
+    // the two badges can flank it left and right — matching the reference
+    const blockWidth = W * 0.55;
+    const blockLeft = (W - blockWidth) / 2;
+    const blockRight = blockLeft + blockWidth;
     const blockBottom = H - m;
     const blockHeight = H * 0.19;
     const blockTop = blockBottom - blockHeight;
     const bannerH = blockHeight * 0.6;
     const footerH = blockHeight - bannerH;
-    const circleR = blockHeight * 0.56;
+    const circleR = blockWidth * 0.15;
+    const textSafeWidth = (blockWidth - circleR * 2) * 0.9;
 
     ctx.save();
     ctx.beginPath();
@@ -375,22 +402,10 @@
     ctx.fillStyle = COLORS.dark;
     ctx.fillRect(blockLeft, blockTop + bannerH, blockWidth, footerH);
 
-    drawFittedText(ctx, (state.status || '').toUpperCase(), blockLeft + blockWidth / 2, blockTop + bannerH / 2, blockWidth * 0.82, bannerH * 0.6, bannerH * 0.22, 800, '#ffffff', '"Montserrat", sans-serif');
-    drawFittedText(ctx, (state.name || '').toUpperCase(), blockLeft + blockWidth / 2, blockTop + bannerH + footerH / 2, blockWidth * 0.62, footerH * 0.52, footerH * 0.2, 700, '#ffffff', '"Montserrat", sans-serif');
+    drawFittedText(ctx, ((state.sexo === 'femea' ? 'ADOTADA' : 'ADOTADO')).toUpperCase(), blockLeft + blockWidth / 2, blockTop + bannerH / 2, textSafeWidth, bannerH * 0.6, bannerH * 0.2, 800, '#ffffff', '"Montserrat", sans-serif');
+    drawFittedText(ctx, (state.name || '').toUpperCase(), blockLeft + blockWidth / 2, blockTop + bannerH + footerH / 2, textSafeWidth, footerH * 0.52, footerH * 0.18, 700, '#ffffff', '"Montserrat", sans-serif');
 
     ctx.restore();
-
-    // bottom-right badge — drawn unclipped so it can poke up above the
-    // pink band into the photo, matching the reference
-    const badgeCx = blockRight - circleR * 0.82;
-    const badgeCy = blockBottom - circleR * 0.82;
-    ctx.beginPath();
-    ctx.fillStyle = COLORS.dark;
-    ctx.arc(badgeCx, badgeCy, circleR, 0, Math.PI * 2);
-    ctx.fill();
-    if (badgeIcon.complete && badgeIcon.naturalWidth){
-      drawContainImage(ctx, badgeIcon, badgeCx, badgeCy, circleR * 1.5, circleR * 1.5);
-    }
 
     ctx.save();
     ctx.strokeStyle = COLORS.accent;
@@ -399,18 +414,27 @@
     ctx.stroke();
     ctx.restore();
 
-    const r2 = W * 0.115;
-    const cx2 = m + r2 * 0.85;
-    const cy2 = m + r2 * 0.85;
-    ctx.save();
+    // badges flank the block at the pink band's height, straddling its
+    // left/right edges — the adoption sticker on the left, the miaudota
+    // mark on the right, poking above the band into the photo
+    const badgeCy = blockTop + bannerH / 2;
+
     ctx.beginPath();
     ctx.fillStyle = '#ffffff';
-    ctx.arc(cx2, cy2, r2, 0, Math.PI * 2);
+    ctx.arc(blockLeft, badgeCy, circleR, 0, Math.PI * 2);
     ctx.fill();
     if (adotadaBadge.complete && adotadaBadge.naturalWidth){
-      drawContainImage(ctx, adotadaBadge, cx2, cy2, r2 * 1.7, r2 * 1.7);
+      ctx.imageSmoothingQuality = 'high';
+      drawContainImage(ctx, adotadaBadge, blockLeft, badgeCy, circleR * 1.7, circleR * 1.7);
     }
-    ctx.restore();
+
+    ctx.beginPath();
+    ctx.fillStyle = COLORS.dark;
+    ctx.arc(blockRight, badgeCy, circleR, 0, Math.PI * 2);
+    ctx.fill();
+    if (badgeIcon.complete && badgeIcon.naturalWidth){
+      drawContainImage(ctx, badgeIcon, blockRight, badgeCy, circleR * 1.5, circleR * 1.5);
+    }
   }
 
   function scheduleRender(){ requestAnimationFrame(render); }
@@ -437,11 +461,21 @@
     scheduleRender();
   });
 
-  els.status.addEventListener('input', () => { state.status = els.status.value; scheduleRender(); });
+  function updateSexUI(){
+    els.sexoSwitch.checked = state.sexo === 'femea';
+    els.sexLabelMacho.classList.toggle('active', state.sexo === 'macho');
+    els.sexLabelFemea.classList.toggle('active', state.sexo === 'femea');
+  }
+
+  els.sexoSwitch.addEventListener('change', () => {
+    state.sexo = els.sexoSwitch.checked ? 'femea' : 'macho';
+    updateSexUI();
+    scheduleRender();
+  });
   els.name.addEventListener('input', () => { state.name = els.name.value; scheduleRender(); });
 
   function syncUIFromState(){
-    els.status.value = state.status;
+    updateSexUI();
     els.name.value = state.name;
     els.offsetY.value = state.panY;
     els.offsetYValue.textContent = state.panY + '%';
@@ -458,6 +492,8 @@
   els.canvasWrap.addEventListener('click', () => {
     els.canvasWrap.classList.toggle('expanded');
   });
+
+  updateSexUI();
 
   Promise.all([
     document.fonts.load('800 76px Montserrat'),
