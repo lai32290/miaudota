@@ -366,7 +366,7 @@
     }
 
     const m = W * 0.035;
-    const borderW = W * 0.008;
+    const borderW = 2;
 
     // the name/status block occupies only 55% of the width and hugs the
     // left border, with the adoption sticker straddling its left edge
@@ -420,11 +420,13 @@
     }
     ctx.restore();
 
-    // miaudota mark sits at the card's own bottom-right corner,
-    // independent of the (now left-aligned) name block
+    // miaudota mark sits inside the border at the card's bottom-right,
+    // independent of the (now left-aligned) name block — fully inside the
+    // frame, with a margin from its left and bottom edges, not straddling it
     const logoR = circleR;
-    const logoCx = (W - m) - logoR * 0.85;
-    const logoCy = (H - m) - logoR * 0.85;
+    const logoMargin = W * 0.025;
+    const logoCx = (W - m) - logoR - logoMargin;
+    const logoCy = (H - m) - logoR - logoMargin;
     ctx.beginPath();
     ctx.fillStyle = COLORS.dark;
     ctx.arc(logoCx, logoCy, logoR, 0, Math.PI * 2);
