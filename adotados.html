@@ -269,10 +269,15 @@
     downloadHint: document.getElementById('downloadHint')
   };
 
-  // fixed template assets — extracted from the miaudota brand logo
+  // fixed template assets: miaudota brand mark (bottom-right badge) and the
+  // adoption sticker (top-left badge) — two distinct icons, per the reference
   const badgeIcon = new Image();
   badgeIcon.onload = () => scheduleRender();
   badgeIcon.src = 'assets/badge-icon.png';
+
+  const adotadaBadge = new Image();
+  adotadaBadge.onload = () => scheduleRender();
+  adotadaBadge.src = 'assets/adotada-badge.svg';
 
   function loadImageFile(file){
     return new Promise((resolve, reject) => {
@@ -347,7 +352,7 @@
     }
 
     const m = W * 0.035;
-    const borderW = W * 0.014;
+    const borderW = W * 0.008;
     const radius = W * 0.05;
 
     const blockLeft = m;
@@ -358,7 +363,7 @@
     const blockTop = blockBottom - blockHeight;
     const bannerH = blockHeight * 0.6;
     const footerH = blockHeight - bannerH;
-    const circleR = blockHeight * 0.36;
+    const circleR = blockHeight * 0.56;
 
     ctx.save();
     ctx.beginPath();
@@ -373,8 +378,12 @@
     drawFittedText(ctx, (state.status || '').toUpperCase(), blockLeft + blockWidth / 2, blockTop + bannerH / 2, blockWidth * 0.82, bannerH * 0.6, bannerH * 0.22, 800, '#ffffff', '"Montserrat", sans-serif');
     drawFittedText(ctx, (state.name || '').toUpperCase(), blockLeft + blockWidth / 2, blockTop + bannerH + footerH / 2, blockWidth * 0.62, footerH * 0.52, footerH * 0.2, 700, '#ffffff', '"Montserrat", sans-serif');
 
-    const badgeCx = blockRight - circleR;
-    const badgeCy = blockBottom - circleR;
+    ctx.restore();
+
+    // bottom-right badge — drawn unclipped so it can poke up above the
+    // pink band into the photo, matching the reference
+    const badgeCx = blockRight - circleR * 0.82;
+    const badgeCy = blockBottom - circleR * 0.82;
     ctx.beginPath();
     ctx.fillStyle = COLORS.dark;
     ctx.arc(badgeCx, badgeCy, circleR, 0, Math.PI * 2);
@@ -382,8 +391,6 @@
     if (badgeIcon.complete && badgeIcon.naturalWidth){
       drawContainImage(ctx, badgeIcon, badgeCx, badgeCy, circleR * 1.5, circleR * 1.5);
     }
-
-    ctx.restore();
 
     ctx.save();
     ctx.strokeStyle = COLORS.accent;
@@ -400,8 +407,8 @@
     ctx.fillStyle = '#ffffff';
     ctx.arc(cx2, cy2, r2, 0, Math.PI * 2);
     ctx.fill();
-    if (badgeIcon.complete && badgeIcon.naturalWidth){
-      drawContainImage(ctx, badgeIcon, cx2, cy2, r2 * 1.64, r2 * 1.64);
+    if (adotadaBadge.complete && adotadaBadge.naturalWidth){
+      drawContainImage(ctx, adotadaBadge, cx2, cy2, r2 * 1.7, r2 * 1.7);
     }
     ctx.restore();
   }
