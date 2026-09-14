@@ -333,10 +333,10 @@
     c.drawImage(img, cx - iw / 2, cy - ih / 2, iw, ih);
   }
 
-  function drawFittedText(c, text, cx, cy, maxWidth, maxFont, minFont, weight, color, fontFamily){
+  function drawFittedTextLeft(c, text, x, cy, maxWidth, maxFont, minFont, weight, color, fontFamily){
     fontFamily = fontFamily || 'Poppins, sans-serif';
     let fontSize = maxFont;
-    c.textAlign = 'center';
+    c.textAlign = 'left';
     c.textBaseline = 'middle';
     while (fontSize > minFont){
       c.font = `${weight} ${fontSize}px ${fontFamily}`;
@@ -345,17 +345,7 @@
     }
     c.font = `${weight} ${fontSize}px ${fontFamily}`;
     c.fillStyle = color;
-    c.fillText(text, cx, cy);
-  }
-
-  function roundedRectPath(c, x, y, w, h, r){
-    c.beginPath();
-    c.moveTo(x + r, y);
-    c.arcTo(x + w, y, x + w, y + h, r);
-    c.arcTo(x + w, y + h, x, y + h, r);
-    c.arcTo(x, y + h, x, y, r);
-    c.arcTo(x, y, x + w, y, r);
-    c.closePath();
+    c.fillText(text, x, cy);
   }
 
   function render(){
@@ -377,12 +367,11 @@
 
     const m = W * 0.035;
     const borderW = W * 0.008;
-    const radius = W * 0.05;
 
-    // the name/status block occupies only 55% of the width, centered, so
-    // the two badges can flank it left and right — matching the reference
+    // the name/status block occupies only 55% of the width and hugs the
+    // left border, with the adoption sticker straddling its left edge
     const blockWidth = W * 0.55;
-    const blockLeft = (W - blockWidth) / 2;
+    const blockLeft = m;
     const blockRight = blockLeft + blockWidth;
     const blockBottom = H - m;
     const blockHeight = H * 0.19;
@@ -390,7 +379,8 @@
     const bannerH = blockHeight * 0.6;
     const footerH = blockHeight - bannerH;
     const circleR = blockWidth * 0.15;
-    const textSafeWidth = (blockWidth - circleR * 2) * 0.9;
+    const textLeft = blockLeft + circleR * 1.15;
+    const textMaxWidth = blockRight - textLeft - blockWidth * 0.05;
 
     ctx.save();
     ctx.beginPath();
@@ -402,38 +392,45 @@
     ctx.fillStyle = COLORS.dark;
     ctx.fillRect(blockLeft, blockTop + bannerH, blockWidth, footerH);
 
-    drawFittedText(ctx, ((state.sexo === 'femea' ? 'ADOTADA' : 'ADOTADO')).toUpperCase(), blockLeft + blockWidth / 2, blockTop + bannerH / 2, textSafeWidth, bannerH * 0.6, bannerH * 0.2, 800, '#ffffff', '"Montserrat", sans-serif');
-    drawFittedText(ctx, (state.name || '').toUpperCase(), blockLeft + blockWidth / 2, blockTop + bannerH + footerH / 2, textSafeWidth, footerH * 0.52, footerH * 0.18, 700, '#ffffff', '"Montserrat", sans-serif');
+    drawFittedTextLeft(ctx, ((state.sexo === 'femea' ? 'ADOTADA' : 'ADOTADO')).toUpperCase(), textLeft, blockTop + bannerH / 2, textMaxWidth, bannerH * 0.6, bannerH * 0.2, 800, '#ffffff', '"Montserrat", sans-serif');
+    drawFittedTextLeft(ctx, (state.name || '').toUpperCase(), textLeft, blockTop + bannerH + footerH / 2, textMaxWidth, footerH * 0.52, footerH * 0.18, 700, '#ffffff', '"Montserrat", sans-serif');
 
     ctx.restore();
 
     ctx.save();
     ctx.strokeStyle = COLORS.accent;
     ctx.lineWidth = borderW;
-    roundedRectPath(ctx, m, m, W - 2 * m, H - 2 * m, radius);
-    ctx.stroke();
+    ctx.strokeRect(m, m, W - 2 * m, H - 2 * m);
     ctx.restore();
 
-    // badges flank the block at the pink band's height, straddling its
-    // left/right edges — the adoption sticker on the left, the miaudota
-    // mark on the right, poking above the band into the photo
+    // adoption sticker straddles the block's left edge, at the pink
+    // band's height, poking up into the photo — clipped to the circle so
+    // the (opaque, non-transparent) source image can't show square corners
     const badgeCy = blockTop + bannerH / 2;
 
+    ctx.save();
     ctx.beginPath();
-    ctx.fillStyle = '#ffffff';
     ctx.arc(blockLeft, badgeCy, circleR, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
     ctx.fill();
+    ctx.clip();
     if (adotadaBadge.complete && adotadaBadge.naturalWidth){
       ctx.imageSmoothingQuality = 'high';
       drawContainImage(ctx, adotadaBadge, blockLeft, badgeCy, circleR * 1.7, circleR * 1.7);
     }
+    ctx.restore();
 
+    // miaudota mark sits at the card's own bottom-right corner,
+    // independent of the (now left-aligned) name block
+    const logoR = circleR;
+    const logoCx = (W - m) - logoR * 0.85;
+    const logoCy = (H - m) - logoR * 0.85;
     ctx.beginPath();
     ctx.fillStyle = COLORS.dark;
-    ctx.arc(blockRight, badgeCy, circleR, 0, Math.PI * 2);
+    ctx.arc(logoCx, logoCy, logoR, 0, Math.PI * 2);
     ctx.fill();
     if (badgeIcon.complete && badgeIcon.naturalWidth){
-      drawContainImage(ctx, badgeIcon, blockRight, badgeCy, circleR * 1.5, circleR * 1.5);
+      drawContainImage(ctx, badgeIcon, logoCx, logoCy, logoR * 1.5, logoR * 1.5);
     }
   }
 
